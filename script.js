@@ -18,6 +18,10 @@
       return cell >= 0 && cell < BOARD_SIZE;
     }
 
+    function get() {
+      return Object.freeze([...board]);
+    }
+
     function reset() {
       board.fill(null);
     }
@@ -33,36 +37,59 @@
       board[cell] = mark;
     }
 
-    return Object.assign(board, { reset, getMark, setMark });
+    return { get, reset, getMark, setMark };
   })();
 
   function Player(mark) {
-    let score = 0;
-    const getScore = () => score;
-    const incrementScore = () => ++score;
-    return { mark, getScore, incrementScore };
+    function getMark() {
+      return mark;
+    }
+
+    return { getMark };
   }
 
   function getWinPosition() {
     return WIN_POSITIONS.find((cells) => {
       const mark = gameBoard.getMark(cells[0]);
       if (!mark) return false;
-      return cells.every((cell) => gameBoard.getMark(cell) === mark);
+      for (let i = 1; i < cells.length; i++) {
+        if (gameBoard.getMark(cells[i]) !== mark) return false;
+      }
+      return true;
     });
   }
 
-  const playerX = Player('X');
-  const playerO = Player('O');
+  const playerX = Player('x');
+  const playerO = Player('o');
 
-  function playRound() {
-    for (let i = 0; i < BOARD_SIZE; i++) {
-      const winPos = getWinPosition();
-      if (winPos) return winPos;
-      const player = i % 2 === 0 ? playerX : playerO;
-      const cell = prompt(`Where to put ${player.mark}?`);
-      gameBoard.setMark(cell, player.mark);
-    }
-  }
+  const turnEl = document.querySelector('.turn');
+  const winnerEl = document.querySelector('.winner');
+  const boardEl = document.querySelector('.board');
+  const restartBtn = document.querySelector('button');
 
-  console.log(playRound());
+  let turn = 0;
+  boardEl.addEventListener('click', function game(e) {
+    if (e.target.className !== 'cell') return;
+
+    const cell = e.target.getAttribute('data-id');
+    if (gameBoard.getMark(cell)) return;
+
+    const [currPlayer, nextPlayer] =
+      turn % 2 === 0 ? [playerX, playerO] : [playerO, playerX];
+
+    gameBoard.setMark(cell, currPlayer.getMark());
+    e.target.textContent = currPlayer.getMark();
+    turnEl.querySelector('span').textContent = nextPlayer.getMark();
+    turn++;
+
+    const winPos = getWinPosition();
+    if (!winPos) return;
+
+    boardEl.removeEventListener('click', game);
+    turnEl.style.display = 'none';
+    winnerEl.querySelector('span').textContent = currPlayer.getMark();
+    winnerEl.style.display = 'block';
+  });
+
+  restartBtn.onclick = () => window.location.reload();
 })();
