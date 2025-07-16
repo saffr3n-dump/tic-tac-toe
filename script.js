@@ -83,12 +83,17 @@
     turn++;
 
     const winPos = getWinPosition();
-    if (!winPos) return;
+    if (!winPos && turn < BOARD_SIZE) return;
 
     boardEl.removeEventListener('click', game);
     turnEl.style.display = 'none';
-    winnerEl.querySelector('span').textContent = currPlayer.getMark();
     winnerEl.style.display = 'block';
+
+    if (winPos) {
+      winnerEl.querySelector('span').textContent = currPlayer.getMark();
+    } else {
+      winnerEl.textContent = 'Tie game!';
+    }
   });
 
   restartBtn.onclick = () => window.location.reload();
